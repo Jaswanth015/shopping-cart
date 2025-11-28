@@ -1,8 +1,17 @@
-name: pages-build-deployment
+name: ci
 
 on:
   push:
     branches: [ "main" ]
+
+permissions:
+  contents: read
+  pages: write       # 👈 required for deploy-pages
+  id-token: write    # 👈 required for deploy-pages
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -11,28 +20,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-    
-      - name: Setup JDK 8
+
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: '8'
-          distribution: 'temurin'
 
-      - name: Maven Build
+      - name: Maven build
         run: mvn -B clean package
 
-      - name: Upload website artifact (HTML files)
+      # ⬇️ this must point to the folder that contains index.html
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: target/                # If your generated output goes here
+          path: path/to/your/static/files   # <--- CHANGE THIS
 
   deploy:
-    needs: build
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}   # 👈 this makes the clickable link
 
     steps:
       - name: Deploy to GitHub Pages
+        id: deployment                               # 👈 ID used above
         uses: actions/deploy-pages@v4
+
+      - name: Print URL
+        run: echo "Deployed to: ${{ steps.deployment.outputs.page_url }}"
