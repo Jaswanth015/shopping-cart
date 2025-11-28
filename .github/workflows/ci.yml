@@ -1,34 +1,38 @@
-name: Maven Build
+name: pages-build-deployment
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  backend:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up JDK 8
+    
+      - name: Setup JDK 8
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
           java-version: '8'
+          distribution: 'temurin'
 
-      - name: Cache Maven repository
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-m2-
-
-      # 👉 If pom.xml is inside a subfolder (like backend/), add:
-      # working-directory: backend
-      - name: Build backend with Maven
+      - name: Maven Build
         run: mvn -B clean package
+
+      - name: Upload website artifact (HTML files)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/                # If your generated output goes here
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
