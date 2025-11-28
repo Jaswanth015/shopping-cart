@@ -1,4 +1,4 @@
-name: Build & Test
+name: Maven Build
 
 on:
   push:
@@ -28,30 +28,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-m2-
 
-      # If your pom.xml is in a subfolder (like backend/), add:
+      # 👉 If pom.xml is inside a subfolder (like backend/), add:
       # working-directory: backend
       - name: Build backend with Maven
         run: mvn -B clean package
-
-  frontend:
-    runs-on: ubuntu-latest
-    needs: backend  # run only if backend succeeded
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: online-shopping-hub-frontend/package-lock.json
-
-      - name: Install frontend dependencies
-        working-directory: online-shopping-hub-frontend
-        run: npm ci
-
-      - name: Build frontend
-        working-directory: online-shopping-hub-frontend
-        run: npm run build
